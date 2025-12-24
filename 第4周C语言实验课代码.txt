@@ -1,0 +1,178 @@
+1.
+#include <stdio.h>
+
+int main() {
+    int a = 1;
+    int b = 0;
+    int *p;
+    
+    p = &a;
+    printf("%d %p %p %d\n", a, &a, p, *p);
+    
+    *p = b;
+    b = *p + 10;
+    printf("%d\n", b);
+
+    return 0;
+}
+
+2.
+#include <stdio.h>
+
+int main() {
+    int f, b, c, d, e, *p;
+    
+    printf("Give me 5 numbers!\n");
+    scanf("%d %d %d %d %d", &f, &b, &c, &d, &e);
+    
+    int a[5] = {f, b, c, d, e};
+    for (int i = 0; i <= 4; i++) {
+        p = &a[i];
+        printf("The %d locates in %p", *p, p);
+    }
+    
+    return 0;
+}
+
+3.
+#include<stdio.h>
+void swap(int *x,int *y){
+        int temp;
+        temp = *x;
+        *x = *y;
+        *y = temp;
+        printf("The changes are done!\n");
+}
+int main(){
+        int a,b,*x,*y;
+
+        printf("Give me 2 numbers and I will exchange their location!!\n");
+        scanf("%d %d\n",&a,&b);
+        x = &a;
+        y = &b;
+        printf("The %d is at %p\n",*x,x);
+        printf("The %d is at %p\n",*y,y);
+        swap(x,y);
+        printf("The %d is at %p\n",*x,x);
+        printf("The %d is at %p\n",*y,y);
+
+        return 0;
+
+
+
+}
+
+4.
+#include <stdio.h>
+
+int my_strlen(char *str) {
+    int i = 0;
+    while (*(str + i) != '\0') {
+        i++;
+    }
+    return i;
+}
+
+int main() {
+    char str[100];
+    
+    printf("Give me a string!\n");
+    scanf("%s", str);
+    
+    int b;
+    b = my_strlen(str);
+    
+    printf("The string length is %d ! \n", b);
+    
+    return 0;
+}
+
+5.
+#include<stdio.h>
+int main(){
+        long x = 1;
+        printf("C!YYDS" );
+        return 0;
+}
+
+6.
+#include <stdio.h>
+#include <string.h>
+
+struct Student {
+    char name[20];
+    int score;
+};
+
+int main() {
+    struct Student students[3];
+    struct Student *p = students;
+    
+    for (int i = 0; i < 3; i++) {
+        printf("Input the %d student name!", i + 1);
+        scanf("%s", (p + i)->name);
+        
+        printf("Input the %d student score!", i + 1);
+        scanf("%d", &(p + i)->score);
+    }
+    
+    struct Student *max = p;
+    for (int a = 1; a < 3; a++) {
+        if ((p + a)->score > max->score) {
+            max = p + a;
+        }
+    }
+    
+    printf("The highest is %s \n His score is %d\n", max->name, max->score);
+    
+    return 0;
+}
+
+7.
+#include <stdlib.h>
+
+typedef struct list_item {
+    int data;
+    struct list_item *next;
+} list_item;
+
+void erase_list(list_item *head) {
+    list_item *current = head;
+    list_item *next_node;
+
+    while (current != NULL) {
+        next_node = current->next;
+        free(current);
+        current = next_node;
+    }
+}
+
+8.
+头文件：
+#ifndef MODULE_H    // 预处理指令：如果MODULE_H未定义
+#define MODULE_H    // 定义MODULE_H，避免头文件重复包含
+
+// 声明全局变量（告知编译器：该变量在其他文件中定义）
+extern int global_num;
+
+// 声明两个函数的原型（告知编译器：函数在其他文件中实现）
+int func_a(void);
+int func_b(void);
+
+#endif  // 结束MODULE_H的条件编译
+主程序：
+#include <stdio.h>
+#include "module.h"  // 包含头文件，获取函数/变量声明
+
+int main(void) {
+    // 1. 调用两个函数并打印返回值
+    int ret_a = func_a();
+    int ret_b = func_b();
+    printf("函数func_a的返回值：%d\n", ret_a);
+    printf("函数func_b的返回值：%d\n", ret_b);
+
+    // 2. 打印全局变量的值
+    printf("全局变量global_num的值：%d\n", global_num);
+
+    return 0;
+}

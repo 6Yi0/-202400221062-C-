@@ -1,0 +1,207 @@
+1.
+#include <stdio.h>
+
+void arrayreverse(int array[], int size);
+
+int main() {
+    int a, b, c, d, e, f, g, h, i, j;
+    scanf("%d %d %d %d %d %d %d %d %d %d", &a, &b, &c, &d, &e, &f, &g, &h, &i, &j);
+    int array[10] = {a, b, c, d, e, f, g, h, i, j};
+    int size = 10;
+    
+    arrayreverse(array, size);
+    
+    printf("逆序后的数组为：\n");
+    for (int i = 0; i < size; i++) {
+        printf("%d\t", array[i]);
+    }
+    
+    return 0;
+}
+
+void arrayreverse(int array[], int size) {
+    for (int i = 0, j = size - 1; i < j; i++, j--) {
+        int temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
+
+2.
+#include <stdio.h>
+
+void count_numbers(int arr[], int size, int counter[]) {
+    for (int i = 0, j = 0; i < size; i++) {
+        int j = arr[i];
+        counter[j]++;
+    }
+}
+
+int main() {
+    int a, b, c, d, e, f, g, h, i, j;
+    scanf("%d %d %d %d %d %d %d %d %d %d", &a, &b, &c, &d, &e, &f, &g, &h, &i, &j);
+    int arr[10] = {a, b, c, d, e, f, g, h, i, j};
+    int size = 10;
+    int counter[10] = {0};
+    
+    count_numbers(arr, size, counter);
+    
+    for (int j = 0; j <= 9; j++) {
+        printf("%d出现次数为：%d\n", j, counter[j]);
+    }
+    
+    return 0;
+}
+
+3.
+#include <stdio.h>
+
+int main() {
+    int A[2][3] = {{1, 2, 3}, {4, 5, 6}}; 
+    int arr[6];
+    int a = 0;
+    
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 3; j++) {
+            arr[a++] = A[i][j];
+        }
+    }
+    
+    printf("存储顺序为：");
+    for (int k = 0; k < 6; k++) {
+        printf("%d", arr[k]);
+    }
+    
+    return 0;
+}
+
+5.
+#include <stdio.h>
+
+int two_dim_array_access(int *x, int i, int j, int m, int n, int C)
+{
+    int movement = (m - i) * C + (n - j);
+    return *(x + movement);
+}
+
+int main() {
+    int A[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    int a = two_dim_array_access(&A[0][0], 0, 0, 1, 2, 3);
+    int b = two_dim_array_access(&A[0][1], 0, 1, 1, 2, 3);
+    
+    printf("two_dim_array_access(&A[0][0],0,0,1,2,3) =%d\n", a);
+    printf("two_dim_array_access(&A[0][1],0,1,1,2,3) =%d\n", b);
+    
+    return 0;
+}
+
+6.
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// 用于每行字符排序的比较函数
+int charCompare(const void *a, const void *b) {
+    return *(char *)a - *(char *)b;
+}
+
+// 用于行排序的比较函数
+int rowCompare(const void *a, const void *b) {
+    return *(int *)a - *(int *)b;
+}
+
+int main() {
+    // 定义二维字符数组并初始化
+    char A[4][6] = {
+        {'S', 'D', 'T', 'Y', 'E', 'S'},
+        {'C', 'H', 'H', 'F', 'R', 'S'},
+        {'A', 'F', 'T', 'E', 'B', 'X'},
+        {'C', 'Y', 'Y', 'D', 'S', '!'}
+    };
+    int rows = 4;
+    int cols = 6;
+    int rowSums[rows];
+    
+    for (int i = 0; i < rows; i++) {
+        qsort(A[i], cols, sizeof(char), charCompare);
+        rowSums[i] = 0;
+        
+        for (int j = 0; j < cols; j++) {
+            rowSums[i] += A[i][j];
+        }
+    }
+
+    // 创建一个存储行索引和对应和的数组，用于行排序
+    int indices[rows];
+    for (int i = 0; i < rows; i++) {
+        indices[i] = i;
+    }
+
+    // 对行按ASCII码和进行升序排序
+    qsort(indices, rows, sizeof(int), rowCompare);
+
+    // 输出排序后的二维数组
+    printf("排序后的数组：\n");
+    for (int i = 0; i < rows; i++) {
+        int rowIdx = indices[i];
+        for (int j = 0; j < cols; j++) {
+            printf("%c ", A[rowIdx][j]);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
+
+7.
+#include <stdio.h>
+
+// 矩阵相乘函数，A是3×4矩阵，B是4×5矩阵，结果C是3×5矩阵
+void matrixMult(double A[3][4], double B[4][5], double C[3][5]) {
+    // 初始化结果矩阵C的所有元素为0
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 5; j++) {
+            C[i][j] = 0;
+        }
+    }
+
+    // 三重循环计算矩阵乘积
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 5; j++) {
+            for (int k = 0; k < 4; k++) {
+                // 按照矩阵乘法规则累加计算C[i][j]
+                C[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+}
+
+int main() {
+    // 定义矩阵A（3×4）、B（4×5）和结果矩阵C（3×5）
+    double A[3][4] = {
+        {1, 2, 3, 4},
+        {5, 6, 7, 8},
+        {9, 10, 11, 12}
+    };
+    double B[4][5] = {
+        {1, 1, 1, 1, 1},
+        {2, 2, 2, 2, 2},
+        {3, 3, 3, 3, 3},
+        {4, 4, 4, 4, 4}
+    };
+    double C[3][5];
+
+    // 调用矩阵相乘函数
+    matrixMult(A, B, C);
+
+    // 打印结果矩阵C
+    printf("矩阵相乘的结果C：\n");
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 5; j++) {
+            printf("%.2f ", C[i][j]);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}

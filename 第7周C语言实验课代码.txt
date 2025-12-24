@@ -1,0 +1,147 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+// 学生结构体定义
+struct Student {
+    char id[20];    // 学号
+    char name[50];  // 姓名
+    float score[3]; // 3门课程成绩
+    float average;  // 平均分
+};
+
+struct Student stu[100]; // 最多存储100名学生
+int count = 0;           // 当前学生数量
+
+// 添加学生信息
+void addStudent() {
+    if (count >= 100) {
+        printf("学生数量已达上限，无法添加！\n");
+        return;
+    }
+    printf("请输入学号：");
+    scanf("%s", stu[count].id);
+    printf("请输入姓名：");
+    scanf("%s", stu[count].name);
+    printf("请输入3门课程成绩（空格分隔）：");
+    scanf("%f %f %f", &stu[count].score[0], &stu[count].score[1], &stu[count].score[2]);
+    
+    // 计算平均分
+    stu[count].average = (stu[count].score[0] + stu[count].score[1] + stu[count].score[2]) / 3;
+    count++;
+    printf("添加成功！当前共有 %d 名学生\n", count);
+}
+
+// 查看所有学生成绩
+void showStudents() {
+    if (count == 0) {
+        printf("暂无学生信息！\n");
+        return;
+    }
+    printf("\n===== 学生成绩列表 =====\n");
+    printf("学号\t姓名\t课程1\t课程2\t课程3\t平均分\n");
+    for (int i = 0; i < count; i++) {
+        printf("%s\t%s\t%.1f\t%.1f\t%.1f\t%.1f\n",
+               stu[i].id, stu[i].name,
+               stu[i].score[0], stu[i].score[1], stu[i].score[2],
+               stu[i].average);
+    }
+    printf("========================\n\n");
+}
+
+// 修改学生成绩（按学号查找）
+void modifyStudent() {
+    if (count == 0) {
+        printf("暂无学生信息！\n");
+        return;
+    }
+    char targetId[20];
+    printf("请输入要修改的学生学号：");
+    scanf("%s", targetId);
+
+    for (int i = 0; i < count; i++) {
+        if (strcmp(stu[i].id, targetId) == 0) {
+            printf("找到学生：%s %s\n", stu[i].id, stu[i].name);
+            printf("请输入新的3门课程成绩（空格分隔）：");
+            scanf("%f %f %f", &stu[i].score[0], &stu[i].score[1], &stu[i].score[2]);
+            stu[i].average = (stu[i].score[0] + stu[i].score[1] + stu[i].score[2]) / 3;
+            printf("修改成功！\n");
+            return;
+        }
+    }
+    printf("未找到该学号的学生！\n");
+}
+
+// 删除学生（按学号查找）
+void deleteStudent() {
+    if (count == 0) {
+        printf("暂无学生信息！\n");
+        return;
+    }
+    char targetId[20];
+    printf("请输入要删除的学生学号：");
+    scanf("%s", targetId);
+
+    for (int i = 0; i < count; i++) {
+        if (strcmp(stu[i].id, targetId) == 0) {
+            // 后面的学生向前覆盖
+            for (int j = i; j < count - 1; j++) {
+                stu[j] = stu[j + 1];
+            }
+            count--;
+            printf("删除成功！当前共有 %d 名学生\n", count);
+            return;
+        }
+    }
+    printf("未找到该学号的学生！\n");
+}
+
+// 按平均分降序排序（冒泡排序）
+void sortStudents() {
+    if (count < 2) {
+        printf("学生数量不足，无需排序！\n");
+        return;
+    }
+    struct Student temp;
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = 0; j < count - i - 1; j++) {
+            if (stu[j].average < stu[j + 1].average) {
+                temp = stu[j];
+                stu[j] = stu[j + 1];
+                stu[j + 1] = temp;
+            }
+        }
+    }
+    printf("已按平均分降序排序完成！\n");
+    showStudents(); // 排序后展示结果
+}
+
+// 菜单界面
+void menu() {
+    printf("\n===== 学生成绩管理系统 =====\n");
+    printf("1. 添加学生信息\n");
+    printf("2. 查看所有学生成绩\n");
+    printf("3. 修改学生成绩\n");
+    printf("4. 删除学生\n");
+    printf("5. 按平均分排序\n");
+    printf("0. 退出系统\n");
+    printf("请选择操作（0-5）：");
+}
+
+int main() {
+    int choice;
+    while (1) {
+        menu();
+        scanf("%d", &choice);
+        switch (choice) {
+            case 1: addStudent(); break;
+            case 2: showStudents(); break;
+            case 3: modifyStudent(); break;
+            case 4: deleteStudent(); break;
+            case 5: sortStudents(); break;
+            case 0: printf("感谢使用，系统已退出！\n"); exit(0);
+            default: printf("输入错误，请重新选择！\n");
+        }
+    }
+    return 0;
+}

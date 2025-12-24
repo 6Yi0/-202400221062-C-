@@ -1,0 +1,167 @@
+1.1
+#include <stdio.h>
+
+int is_leap(int year) {
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+
+int get_month_days(int year, int month) {
+    int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (month == 2 && is_leap(year)) {
+        return 29;
+    }
+    return days[month - 1];
+}
+
+int total_days(int year, int month, int day) {
+    int sum = 0;
+    for (int y = 1; y < year; y++) {
+        sum += is_leap(y) ? 366 : 365;
+    }
+    for (int m = 1; m < month; m++) {
+        sum += get_month_days(year, m);
+    }
+    sum += day;
+    return sum;
+}
+
+int main() {
+    int year, month, day;
+    printf("输入日期（年 月 日）：");
+    scanf("%d %d %d", &year, &month, &day);
+
+    int base_total = total_days(2025, 11, 12);
+    int target_total = total_days(year, month, day);
+    int diff = target_total - base_total;
+
+    char *weekdays[] = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
+    int weekday = (3 + diff % 7 + 7) % 7;
+
+    printf("%d年%d月%d日是%s\n", year, month, day, weekdays[weekday]);
+    
+    return 0;
+}
+
+1.2
+#include <stdio.h>
+
+int is_leap(int year) {
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+
+int get_month_days(int year, int month) {
+    int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (month == 2 && is_leap(year)) return 29;
+    return days[month - 1];
+}
+
+int total_days(int year, int month, int day) {
+    int sum = 0;
+    for (int y = 1; y < year; y++) {
+        sum += is_leap(y) ? 366 : 365;
+    }
+    for (int m = 1; m < month; m++) {
+        sum += get_month_days(year, m);
+    }
+    sum += day;
+    return sum;
+}
+
+int get_first_weekday(int year, int month) {
+    int base_total = total_days(2025, 11, 12);
+    int target_total = total_days(year, month, 1);
+    int diff = target_total - base_total;
+    return (3 + diff % 7 + 7) % 7;
+}
+
+void print_calendar(int year, int month) {
+    int days = get_month_days(year, month);
+    int first_weekday = get_first_weekday(year, month);
+
+    printf("\n%d年%d月日历\n", year, month);
+    printf("日 一 二 三 四 五 六\n");
+
+    // 打印前导空格
+    for (int i = 0; i < first_weekday; i++) {
+        printf("  ");
+    }
+
+    // 打印日期
+    for (int day = 1; day <= days; day++) {
+        printf("%2d ", day);
+        if ((first_weekday + day) % 7 == 0) {
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
+
+int main() {
+    int year, month;
+    printf("请输入年 月：");
+    scanf("%d %d", &year, &month);
+    print_calendar(year, month);
+    return 0;
+}
+
+1.3
+#include <stdio.h>
+
+int is_leap(int year) {
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+
+int get_month_days(int year, int month) {
+    int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (month == 2 && is_leap(year)) return 29;
+    return days[month - 1];
+}
+
+int total_days(int year, int month, int day) {
+    int sum = 0;
+    for (int y = 1; y < year; y++) {
+        sum += is_leap(y) ? 366 : 365;
+    }
+    for (int m = 1; m < month; m++) {
+        sum += get_month_days(year, m);
+    }
+    sum += day;
+    return sum;
+}
+
+int get_first_weekday(int year, int month) {
+    int base_total = total_days(2025, 11, 12);
+    int target_total = total_days(year, month, 1);
+    int diff = target_total - base_total;
+    return (3 + diff % 7 + 7) % 7;
+}
+
+void print_month_calendar(int year, int month) {
+    int days = get_month_days(year, month);
+    int first_weekday = get_first_weekday(year, month);
+
+    printf("\n%d年%d月\n", year, month);
+    printf("日 一 二 三 四 五 六\n");
+
+    for (int i = 0; i < first_weekday; i++) {
+        printf("  ");
+    }
+
+    for (int day = 1; day <= days; day++) {
+        printf("%2d ", day);
+        if ((first_weekday + day) % 7 == 0) {
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
+
+int main() {
+    int year;
+    printf("请输入年份：");
+    scanf("%d", &year);
+    for (int month = 1; month <= 12; month++) {
+        print_month_calendar(year, month);
+    }
+    return 0;
+}

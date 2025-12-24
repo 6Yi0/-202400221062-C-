@@ -1,0 +1,214 @@
+五子棋：
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+// 常量定义
+#define SIZE 15          
+#define EMPTY 0          
+#define BLACK 1          
+#define WHITE 2          
+#define MAX_DEPTH 3      
+
+// 全局变量
+int board[SIZE][SIZE];   // 棋盘数组
+
+// 初始化棋盘
+void init_board() {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            board[i][j] = EMPTY;
+        }
+    }
+}
+
+// 打印棋盘
+void print_board() {
+    system("cls");
+
+    // 打印列号
+    printf("  ");
+    for (int j = 0; j < SIZE; j++) {
+        printf("%2d", j);
+    }
+    printf("\n");
+
+    // 打印行号和棋盘内容
+    for (int i = 0; i < SIZE; i++) {
+        printf("%2d", i);
+        for (int j = 0; j < SIZE; j++) {
+            if (board[i][j] == EMPTY) {
+                printf(" .");
+            } else if (board[i][j] == BLACK) {
+                printf(" X");
+            } else {
+                printf(" O");
+            }
+        }
+        printf("\n");
+    }
+}
+
+// 检查落子后是否获胜
+int check_win(int x, int y, int color) {
+    // 四个检查方向：横、竖、左斜(/)、右斜(\)
+    int dirs[4][2] = {{0, 1}, {1, 0}, {1, 1}, {1, -1}};
+
+    for (int d = 0; d < 4; d++) {
+        int count = 1;
+        int dx = dirs[d][0];
+        int dy = dirs[d][1];
+
+        // 正向检查
+        for (int i = 1; i < 5; i++) {
+            int nx = x + i * dx;
+            int ny = y + i * dy;
+            if (nx < 0 || nx >= SIZE || ny < 0 || ny >= SIZE) break;
+            if (board[nx][ny] == color) count++;
+            else break;
+        }
+
+        // 反向检查
+        for (int i = 1; i < 5; i++) {
+            int nx = x - i * dx;
+            int ny = y - i * dy;
+            if (nx < 0 || nx >= SIZE || ny < 0 || ny >= SIZE) break;
+            if (board[nx][ny] == color) count++;
+            else break;
+        }
+
+        if (count >= 5) return 1;
+    }
+    return 0;
+}
+
+// 检查棋盘是否下满(平局)
+int is_board_full() {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (board[i][j] == EMPTY) return 0;
+        }
+    }
+    return 1;
+}
+
+// 双人对战模式
+void two_player_mode() {
+    init_board();
+    int current_color = BLACK;
+    int x, y;
+    while (1) {
+        print_board();
+        printf("当前回合：玩家%d落子(X为黑棋，O为白棋)\n", current_color);
+        printf("请输入落子坐标(行 列，空格分隔，如3 5)：");
+        scanf("%d %d", &x, &y);
+
+        // 检查输入合法性
+        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE || board[x][y] != EMPTY) {
+            printf("输入无效，请重新输入！按任意键继续...");
+            getchar(); getchar();
+            continue;
+        }
+
+        // 落子
+        board[x][y] = current_color;
+
+        // 检查胜负
+        if (check_win(x, y, current_color)) {
+            print_board();
+            printf("恭喜玩家%d获胜！\n", current_color);
+            break;
+        }
+
+        // 检查平局
+        if (is_board_full()) {
+            print_board();
+            printf("棋盘已满，平局！\n");
+            break;
+        }
+        current_color = (current_color == BLACK) ? WHITE : BLACK;
+    }
+}
+
+// AI随机落子
+void ai_random_move(int* x, int* y) {
+    srand(time(0));
+    do {
+        *x = rand() % SIZE;
+        *y = rand() % SIZE;
+    } while (board[*x][*y] != EMPTY);
+}
+
+// 人机对战模式
+void ai_mode() {
+    init_board();
+    int current_color = BLACK;
+    int x, y;
+
+    while (1) {
+        print_board();
+
+        if (current_color == BLACK) {
+            // 玩家落子
+            printf("你的回合(黑棋X)，请输入落子坐标(行 列)：");
+            scanf("%d %d", &x, &y);
+
+            // 检查输入合法性
+            if (x < 0 || x >= SIZE || y < 0 || y >= SIZE || board[x][y] != EMPTY) {
+                printf("输入无效，请重新输入！按任意键继续...");
+                getchar(); getchar();
+                continue;
+            }
+        } else {
+            // AI落子
+            printf("AI落子中(白棋O)...\n");
+            ai_random_move(&x, &y);
+            printf("AI落在了(%d, %d)\n", x, y);
+            getchar(); getchar();
+        }
+
+        // 落子
+        board[x][y] = current_color;
+
+        // 检查胜负
+        if (check_win(x, y, current_color)) {
+            print_board();
+            if (current_color == BLACK) {
+                printf("恭喜你获胜！\n");
+            } else {
+                printf("AI获胜，再接再厉！\n");
+            }
+            break;
+        }
+        // 检查平局
+        if (is_board_full()) {
+            print_board();
+            printf("棋盘已满，平局！\n");
+            break;
+        }
+
+        current_color = (current_color == BLACK) ? WHITE : BLACK;
+    }
+}
+
+// 主函数(程序入口)
+int main() {
+    int mode;
+    printf("===== 五子棋游戏 =====\n");
+    printf("请选择游戏模式：\n");
+    printf("1. 双人对战\n");
+    printf("2. 人机对战\n");
+    printf("请输入模式编号(1或2)：");
+    scanf("%d", &mode);
+
+    if (mode == 1) {
+        two_player_mode();
+    } else if (mode == 2) {
+        ai_mode();
+    } else {
+        printf("无效的模式选择！\n");
+    }
+
+    return 0;
+}

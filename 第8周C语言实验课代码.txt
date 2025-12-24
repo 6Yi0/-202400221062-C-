@@ -1,0 +1,463 @@
+影院购票：
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ROWS 10
+#define COLS 10
+#define SEAT_FILE "cinema_seats.txt"
+
+// 初始化座位（从文件读取或默认置空）
+void init_seats(int seats[ROWS][COLS]) {
+    FILE *fp = fopen(SEAT_FILE, "r");
+    if (fp) {
+        for (int i = 0; i < ROWS; i++) {
+            for (int j = 0; j < COLS; j++) {
+                fscanf(fp, "%d", &seats[i][j]);
+            }
+        }
+        fclose(fp);
+    } else {
+        for (int i = 0; i < ROWS; i++) {
+            memset(seats[i], 0, sizeof(int) * COLS);
+        }
+    }
+}
+
+// 保存座位信息到文件
+void save_seats(int seats[ROWS][COLS]) {
+    FILE *fp = fopen(SEAT_FILE, "w");
+    if (!fp) {
+        printf("文件保存失败!");
+        return;
+    }
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++) {
+            fprintf(fp, "%d", seats[i][j]);
+        }
+        fprintf(fp, "\n");
+    }
+    fclose(fp);
+}
+
+// 展示座位图
+void show_seats(int seats[ROWS][COLS]) {
+    printf("===影院座位图===\n");
+    printf(" ");
+    for (int j = 0; j < COLS; j++) {
+        printf("%2d", j + 1);
+    }
+    printf("\n");
+    for (int i = 0; i < ROWS; i++) {
+        printf("%2d", i + 1);
+        for (int j = 0; j < COLS; j++) {
+            if (seats[i][j] == 0) {
+                printf("□ ");
+            } else {
+                printf("■ ");
+            }
+        }
+        printf("\n");
+    }
+}
+
+// 选择座位（校验合法性并更新状态）
+void select_seat(int seats[ROWS][COLS]) {
+    int row, col;
+    printf("请选择你的座位（行/列）：");
+    scanf("%d %d", &row, &col);
+    
+    // 校验座位范围
+    if (row < 1 || row > ROWS || col < 1 || col > COLS) {
+        printf("输入座位无效！\n");
+        return;
+    }
+    
+    row--;
+    col--;
+    
+    // 校验座位是否已售
+    if (seats[row][col] == 1) {
+        printf("该座位已售！\n");
+    } else {
+        seats[row][col] = 1;
+        printf("选座成功！\n");
+        save_seats(seats);
+    }
+}
+
+int main() {
+    int seats[ROWS][COLS];
+    int choice;
+    init_seats(seats);
+    
+    while (1) {
+        printf("===影院选座系统===\n");
+        printf("1.查看座位\n");
+        printf("2.选择座位\n");
+        printf("3.退出\n");
+        printf("输入选择：\n");
+        scanf("%d", &choice);
+        
+        switch (choice) {
+            case 1:
+                show_seats(seats);
+                break;
+            case 2:
+                select_seat(seats);
+                break;
+            case 3:
+                printf("感谢使用！\n");
+                exit(0);
+            default:
+                printf("输入错误！\n");
+        }
+    }
+    
+    return 0;
+}
+
+贪吃蛇：
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <termios.h>
+
+// 游戏核心常量定义
+#define WIDTH 25        // 游戏区域宽度
+#define HEIGHT 18       // 游戏区域高度
+#define INIT_LENGTH 3   // 蛇的初始长度
+#define SPEED 200000    // 游戏速度（微秒）
+#define SCORE_PER_FOOD 10 // 每个食物的得分
+
+// 蛇的移动方向枚举
+enum { UP, DOWN, LEFT, RIGHT };
+
+// 蛇的节点结构（单向链表）
+typedef struct Node {
+    int x, y;
+    struct Node* next;
+} Node;
+
+// 游戏状态结构体
+typedef struct {
+    Node* head;         // 蛇头指针
+    Node* tail;         // 蛇尾指针
+    int food_x;         // 食物x坐标
+    int food_y;         // 食物y坐标
+    int dir;            // 当前移动方向
+    int next_dir;       // 缓冲方向（防快速反向）
+    int score;          // 游戏得分
+    int game_over;      // 游戏结束标志
+    int length;         // 蛇当前长度
+} Game;
+
+// 设置终端非阻塞模式（1=启用，0=恢复）
+void set_nonblocking(int enable) {
+    static struct termios oldt, newt;
+
+    if (enable) {
+        tcgetattr(STDIN_FILENO, &oldt);
+        newt = oldt;
+        newt.c_lflag &= ~(ICANON | ECHO);
+        newt.c_cc[VMIN] = 0;
+        newt.c_cc[VTIME] = 0;
+        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    } else {
+        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    }
+}
+
+// 清屏（ANSI转义序列，兼容Linux/macOS）
+void clear_screen() {
+    printf("\033[2J\033[H");
+    fflush(stdout);
+}
+
+// 初始化蛇（安全区域生成初始蛇身）
+void init_snake(Game* game) {
+    game->head = NULL;
+    game->tail = NULL;
+    game->length = INIT_LENGTH;
+
+    int start_x = WIDTH / 2;
+    int start_y = HEIGHT / 2;
+
+    for (int i = 0; i < INIT_LENGTH; i++) {
+        Node* new_node = (Node*)malloc(sizeof(Node));
+        if (new_node == NULL) {
+            perror("malloc failed");
+            exit(EXIT_FAILURE);
+        }
+        new_node->x = start_x + i;
+        new_node->y = start_y;
+        new_node->next = NULL;
+
+        if (game->head == NULL) {
+            game->head = new_node;
+            game->tail = new_node;
+        } else {
+            game->tail->next = new_node;
+            game->tail = new_node;
+        }
+    }
+
+    game->dir = LEFT;
+    game->next_dir = LEFT;
+}
+
+// 生成食物（避开蛇身和边界）
+void generate_food(Game* game) {
+    int valid;
+    int attempts = 0;
+
+    do {
+        valid = 1;
+        game->food_x = 2 + rand() % (WIDTH - 4);
+        game->food_y = 2 + rand() % (HEIGHT - 4);
+
+        // 检查食物是否在蛇身上
+        Node* current = game->head;
+        while (current != NULL) {
+            if (current->x == game->food_x && current->y == game->food_y) {
+                valid = 0;
+                break;
+            }
+            current = current->next;
+        }
+
+        attempts++;
+        if (attempts > 100) {
+            game->food_x = WIDTH / 2;
+            game->food_y = HEIGHT / 2;
+            break;
+        }
+    } while (!valid);
+}
+
+// 初始化游戏状态
+void init_game(Game* game) {
+    srand((unsigned int)time(NULL));
+    game->score = 0;
+    game->game_over = 0;
+    game->length = INIT_LENGTH;
+
+    init_snake(game);
+    generate_food(game);
+}
+
+// 绘制游戏界面
+void draw_game(Game* game) {
+    clear_screen();
+
+    // 打印标题和控制说明
+    printf("贪吃蛇游戏 - 控制: WASD, 退出: Q\n");
+    printf("================================\n\n");
+
+    // 初始化游戏区域缓冲区
+    char board[HEIGHT][WIDTH + 1];
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            if (x == 0 || x == WIDTH-1 || y == 0 || y == HEIGHT-1) {
+                board[y][x] = '#';
+            } else {
+                board[y][x] = ' ';
+            }
+        }
+        board[y][WIDTH] = '\0';
+    }
+
+    // 标记食物和蛇的位置
+    board[game->food_y][game->food_x] = '*';
+    Node* current = game->head;
+    int count = 0;
+    while (current != NULL) {
+        board[current->y][current->x] = (count == 0) ? '@' : 'o';
+        current = current->next;
+        count++;
+    }
+
+    // 显示游戏区域
+    for (int y = 0; y < HEIGHT; y++) {
+        printf("  %s\n", board[y]);
+    }
+
+    // 显示游戏信息
+    printf("\n分数: %d  长度: %d\n", game->score, game->length);
+    printf("方向: ");
+    switch (game->dir) {
+        case UP: printf("上"); break;
+        case DOWN: printf("下"); break;
+        case LEFT: printf("左"); break;
+        case RIGHT: printf("右"); break;
+    }
+    printf("\n");
+    fflush(stdout);
+}
+
+// 检查位置是否安全（撞墙/撞自身返回0）
+int is_safe_position(Game* game, int x, int y) {
+    // 边界检查
+    if (x <= 0 || x >= WIDTH-1 || y <= 0 || y >= HEIGHT-1) {
+        return 0;
+    }
+
+    // 自身碰撞检查
+    Node* current = game->head;
+    while (current != NULL) {
+        if (current->x == x && current->y == y) {
+            return 0;
+        }
+        current = current->next;
+    }
+
+    return 1;
+}
+
+// 移动蛇（核心逻辑：更新位置/吃食物/碰撞检测）
+void move_snake(Game* game) {
+    game->dir = game->next_dir;
+    int new_x = game->head->x;
+    int new_y = game->head->y;
+
+    // 计算新蛇头位置
+    switch (game->dir) {
+        case UP:    new_y--; break;
+        case DOWN:  new_y++; break;
+        case LEFT:  new_x--; break;
+        case RIGHT: new_x++; break;
+    }
+
+    // 碰撞检测
+    if (!is_safe_position(game, new_x, new_y)) {
+        game->game_over = 1;
+        return;
+    }
+
+    // 创建新蛇头
+    Node* new_head = (Node*)malloc(sizeof(Node));
+    if (new_head == NULL) {
+        perror("malloc failed");
+        game->game_over = 1;
+        return;
+    }
+    new_head->x = new_x;
+    new_head->y = new_y;
+    new_head->next = game->head;
+    game->head = new_head;
+
+    // 吃食物逻辑
+    if (new_x == game->food_x && new_y == game->food_y) {
+        game->score += SCORE_PER_FOOD;
+        game->length++;
+        generate_food(game);
+    } else {
+        // 未吃食物，移除尾节点
+        if (game->head != NULL && game->head->next != NULL) {
+            Node* current = game->head;
+            while (current->next != game->tail) {
+                current = current->next;
+            }
+            free(game->tail);
+            game->tail = current;
+            game->tail->next = NULL;
+        }
+    }
+}
+
+// 处理键盘输入（非阻塞读取）
+void handle_input(Game* game) {
+    char ch;
+    if (read(STDIN_FILENO, &ch, 1) > 0) {
+        switch (ch) {
+            case 'w': case 'W':
+                if (game->dir != DOWN) game->next_dir = UP;
+                break;
+            case 's': case 'S':
+                if (game->dir != UP) game->next_dir = DOWN;
+                break;
+            case 'a': case 'A':
+                if (game->dir != RIGHT) game->next_dir = LEFT;
+                break;
+            case 'd': case 'D':
+                if (game->dir != LEFT) game->next_dir = RIGHT;
+                break;
+            case 'q': case 'Q':
+                game->game_over = 1;
+                break;
+        }
+    }
+}
+
+// 清理内存（释放蛇身链表）
+void cleanup(Game* game) {
+    Node* current = game->head;
+    while (current != NULL) {
+        Node* next = current->next;
+        free(current);  // 修复原代码未释放内存的漏洞
+        current = next;
+    }
+    game->head = NULL;
+    game->tail = NULL;
+}
+
+// 显示游戏结束界面
+void show_game_over(Game* game) {
+    clear_screen();
+    printf("===========================\n");
+    printf("          游戏结束          \n");
+    printf("===========================\n\n");
+    printf("最终得分: %d\n", game->score);
+    printf("最终长度: %d\n", game->length);
+    printf("\n按任意键退出...\n");
+    fflush(stdout);
+
+    set_nonblocking(0);
+    getchar();
+}
+
+// 主函数（程序入口）
+int main() {
+    // 游戏说明
+    printf("贪吃蛇游戏\n");
+    printf("==========\n\n");
+    printf("游戏说明:\n");
+    printf("- 使用 W, A, S, D 控制蛇的移动\n");
+    printf("- 吃到食物(*)增加长度和分数\n");
+    printf("- 撞墙(#)或撞自身游戏结束\n");
+    printf("- 按 Q 退出游戏\n\n");
+
+    printf("按回车键开始游戏...");
+    getchar();
+
+    // 初始化游戏
+    set_nonblocking(1);
+    Game game;
+    init_game(&game);
+
+    // 初始画面
+    draw_game(&game);
+    printf("游戏开始！蛇在中间位置，向左移动。\n");
+    fflush(stdout);
+    usleep(1000000);
+
+    // 游戏主循环
+    while (!game.game_over) {
+        handle_input(&game);
+        move_snake(&game);
+
+        if (!game.game_over) {
+            draw_game(&game);
+        }
+        usleep(SPEED);
+    }
+
+    // 游戏结束流程
+    show_game_over(&game);
+    cleanup(&game);
+    set_nonblocking(0);
+
+    return 0;
+}
